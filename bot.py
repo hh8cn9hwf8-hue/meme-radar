@@ -3,6 +3,7 @@ import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+import json
 
 BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -36,9 +37,10 @@ def google_news_url(query):
 
 def fetch_news(query):
     url = google_news_url(query)
+
     req = urllib.request.Request(
         url,
-        headers={"User-Agent": "Mozilla/5.0"},
+        headers={"User-Agent": "Mozilla/5.0"}
     )
 
     with urllib.request.urlopen(req, timeout=15) as response:
@@ -50,8 +52,10 @@ def fetch_news(query):
 
 def get_text(item, tag):
     element = item.find(tag)
+
     if element is None or element.text is None:
         return ""
+
     return element.text.strip()
 
 
@@ -63,6 +67,33 @@ def article_data(item):
     }
 
 
+def translate_fr(text):
+    try:
+        encoded = urllib.parse.quote(text)
+
+        url = (
+            "https://translate.googleapis.com/translate_a/single"
+            "?client=gtx&sl=auto&tl=fr&dt=t&q="
+            + encoded
+        )
+
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+
+        with urllib.request.urlopen(req, timeout=15) as response:
+            result = json.loads(response.read().decode("utf-8"))
+
+        return "".join(
+            part[0] for part in result[0] if part[0]
+        )
+
+    except Exception as e:
+        print("Erreur traduction :", e)
+        return text
+
+
 def telegram_send(message):
     if not BOT_TOKEN or not CHAT_ID:
         print("Telegram non configuré")
@@ -70,18 +101,16 @@ def telegram_send(message):
 
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
-    data = urllib.parse.urlencode(
-        {
-            "chat_id": CHAT_ID,
-            "text": message,
-            "disable_web_page_preview": "true",
-        }
-    ).encode()
+    data = urllib.parse.urlencode({
+        "chat_id": CHAT_ID,
+        "text": message,
+        "disable_web_page_preview": "true",
+    }).encode()
 
     urllib.request.urlopen(
         url,
         data=data,
-        timeout=15,
+        timeout=15
     ).read()
 
 
@@ -90,13 +119,12 @@ def make_key(article):
 
 
 def scan_once():
-    alerts = []
-
     for query in SEARCHES:
+
         try:
             items = fetch_news(query)
 
-            for item in items[:10]:
+            for item in items[:3]:
                 article = article_data(item)
                 key = make_key(article)
 
@@ -105,38 +133,24 @@ def scan_once():
 
                 SEEN.add(key)
 
-                if article["title"]:
-                    alerts.append(article)
+                titre_fr = translate_fr(article["title"])
 
-        except Exception as exc:
-            print(f"Erreur pour {query}: {exc}")
+                message = (
+                    "🚨 MEME RADAR\n\n"
+                    "🇫🇷 " + titre_fr + "\n\n"
+                    "🕒 Publié : " + article["pubDate"] + "\n\n"
+                    "🔗 Lire l'article :\n"
+                    + article["link"]
+                )
 
-    return alerts
+                telegram_send(message)
 
-
-def format_message(article):
-    return (
-        "🚨 MEME RADAR\n\n"
-        f"{article['title']}\n\n"
-        f"Publié : {article['pubDate']}\n"
-        f"Source : {article['link']}"
-    )
+        except Exception as e:
+            print(f"Erreur pour {query}: {e}")
 
 
-def main():
-    print("Meme Radar démarré")
+print("🚀 Meme Radar démarré")
 
-    while True:
-        alerts = scan_once()
-
-        for article in alerts:
-            try:
-                telegram_send(format_message(article))
-            except Exception as exc:
-                print(f"Erreur Telegram: {exc}")
-
-        time.sleep(CHECK_INTERVAL)
-
-
-if __name__ == "__main__":
-    main()
+while True:
+    scan_once()
+    time.sleep(CHECK_INTERVAL)
