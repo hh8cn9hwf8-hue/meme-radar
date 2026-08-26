@@ -40,19 +40,19 @@ def fetch_news(query):
 
     root = ET.fromstring(data)
     return root.findall(".//item")
-    def get_text(item, tag):
+def get_text(item, tag):
         element = item.find(tag)
     if element is None or element.text is None:
         return ""
     return element.text.strip()
-    def article_data(item):
+def article_data(item):
         return {
             "title": get_text(item, "title"),
             "link": get_text(item, "link"),
             "pubDate": get_text(item, "pubDate"),
     }
-    def telegram_send(message):
-        if not BOT_TOKEN or not CHAT_ID:
+def telegram_send(message):
+ if not BOT_TOKEN or not CHAT_ID:
             print("Telegram non configuré")
             return
 
