@@ -29,7 +29,7 @@ def google_news_url(query):
         + encoded
         + "&hl=en-US&gl=US&ceid=US:en"
     )
-  def fetch_news(query):
+def fetch_news(query):
     url = google_news_url(query)
     req = urllib.request.Request(
         url,
