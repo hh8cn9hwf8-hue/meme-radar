@@ -52,18 +52,18 @@ def fetch_news(query):
             "pubDate": get_text(item, "pubDate"),
     }
     def telegram_send(message):
-    if not BOT_TOKEN or not CHAT_ID:
-        print("Telegram non configuré")
-        return
+        if not BOT_TOKEN or not CHAT_ID:
+            print("Telegram non configuré")
+            return
 
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    data = urllib.parse.urlencode({
-        "chat_id": CHAT_ID,
-        "text": message,
-        "disable_web_page_preview": "true",
-    }).encode()
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        data = urllib.parse.urlencode({
+            "chat_id": CHAT_ID,
+            "text": message,
+            "disable_web_page_preview": "true",
+        }).encode()
 
-    urllib.request.urlopen(url, data=data, timeout=15).read()
+        urllib.request.urlopen(url, data=data, timeout=15).read()
 def make_key(article):
     return article["title"] + "|" + article["link"]
 
