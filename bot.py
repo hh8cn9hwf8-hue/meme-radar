@@ -41,7 +41,7 @@ def fetch_news(query):
     root = ET.fromstring(data)
     return root.findall(".//item")
     def get_text(item, tag):
-    element = item.find(tag)
+        element = item.find(tag)
     if element is None or element.text is None:
         return ""
     return element.text.strip()
