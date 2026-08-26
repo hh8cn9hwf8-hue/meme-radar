@@ -46,10 +46,10 @@ def fetch_news(query):
         return ""
     return element.text.strip()
     def article_data(item):
-    return {
-        "title": get_text(item, "title"),
-        "link": get_text(item, "link"),
-        "pubDate": get_text(item, "pubDate"),
+        return {
+            "title": get_text(item, "title"),
+            "link": get_text(item, "link"),
+            "pubDate": get_text(item, "pubDate"),
     }
     def telegram_send(message):
     if not BOT_TOKEN or not CHAT_ID:
